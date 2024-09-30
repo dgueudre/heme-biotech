@@ -1,47 +1,59 @@
 package com.hemebiotech.analytics;
 
-import java.io.BufferedReader;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.IOException;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public class AnalyticsCounter {
 
-	public static void main(String[] args) throws Exception {
+	private ISymptomReader reader;
+	private ISymptomWriter writer;
+
+	public AnalyticsCounter(ISymptomReader reader, ISymptomWriter writer) {
+		this.reader = reader;
+		this.writer = writer;
+	}
+
+	public List<String> getSymptoms() {
+		return reader.getSymptoms();
+	}
+
+	public Map<String, Integer> countSymptoms(List<String> symptoms) {
 
 		Map<String, Integer> results = new HashMap<>();
 
-		BufferedReader reader = new BufferedReader(new FileReader("symptoms.txt"));
-		String inputSymptom = reader.readLine();
-
-		while (inputSymptom != null) {
+		symptoms.forEach(symptom -> {
 
 			Integer counter = 0;
 
-			if (results.containsKey(inputSymptom)) {
-				counter = results.get(inputSymptom);
+			if (results.containsKey(symptom)) {
+				counter = results.get(symptom);
 			}
 
 			counter++;
 
-			results.put(inputSymptom, counter);
+			results.put(symptom, counter);
 
-			inputSymptom = reader.readLine();
-		}
-
-		reader.close();
-
-		FileWriter writer = new FileWriter("result.out");
-
-		results.forEach((symptom, counter) -> {
-			try {
-				writer.write(symptom + ": " + counter + "\n");
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
 		});
-		writer.close();
+
+		return results;
 	}
+
+	public Map<String, Integer> sortSymptoms(Map<String, Integer> symptoms) {
+		return symptoms.entrySet()
+				.stream()
+				.sorted(Map.Entry.<String, Integer>comparingByValue())
+				.collect(Collectors.toMap(
+						Map.Entry::getKey,
+						Map.Entry::getValue,
+						(e1, e2) -> e1,
+						LinkedHashMap::new));
+	}
+
+	public void writeSymptoms(Map<String, Integer> symptoms) {
+		writer.writeSymptoms(symptoms);
+	}
+
 }
